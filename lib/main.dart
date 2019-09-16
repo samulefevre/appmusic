@@ -35,6 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
   Music currentMusic;
+  double position = 0.0;
 
   @override
   void initState() {
@@ -63,10 +64,85 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: MediaQuery.of(context).size.height / 2.5,
                 child: Image.asset(currentMusic.imagePath),
               ),
+            ),
+            playerText(currentMusic.title, 1.5),
+            playerText(currentMusic.artist, 1.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                playerButtons(Icons.fast_rewind, 30.0,ActionMusic.rewind),
+                playerButtons(Icons.play_arrow, 45.0,ActionMusic.play),
+                playerButtons(Icons.fast_forward, 30.0,ActionMusic.forward),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                playerText('0:0', 0.8),
+                playerText('0:22', 0.8),
+              ],
+            ),
+            Slider(
+              value: position,
+              min: 0.0,
+              max: 30.0,
+              inactiveColor: Colors.white,
+              activeColor: Colors.red,
+              onChanged:(double d) {
+                setState(() {
+                  position = d;
+                });
+              },
             )
           ],
         ),
       ),
     );
   }
+
+  IconButton playerButtons(IconData icon, double size, ActionMusic action) {
+    return IconButton(
+      iconSize: size,
+      color: Colors.white,
+      icon: Icon(icon),
+      onPressed: () {
+        switch (action) {
+          case ActionMusic.play:
+            print('Play');
+            break;
+          case ActionMusic.pause:
+            print('Pause');
+            break;
+          case ActionMusic.rewind:
+            print('Rewind');
+            break;
+          case ActionMusic.forward:
+            print('Forward');
+            break;
+        }
+      },
+    );
+
+  }
+
+  Text playerText(String data, double scale) {
+    return new Text(
+      data,
+      textScaleFactor: scale,
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 20.0,
+        fontStyle: FontStyle.italic,
+      ),
+    );
+  }
+
+  
+}
+
+enum ActionMusic {
+  play,
+  pause,
+  rewind,
+  forward
 }
