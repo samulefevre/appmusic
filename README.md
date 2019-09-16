@@ -1,6 +1,6 @@
 # appmusic
 
-A new Flutter project.
+Flutter project with an audio player.
 
 ## Getting Started
 

@@ -156,9 +156,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void configAudioPlayer() {
-    audioPlayer.onAudioPositionChanged.listen(
-      (pos) => setState(() => position = pos)
-    );
+    audioPlayer.onAudioPositionChanged
+        .listen((pos) => setState(() => position = pos));
 
     audioPlayer.onDurationChanged.listen((Duration d) {
       print('Max duration: $d');
@@ -166,7 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     audioPlayer.onPlayerStateChanged.listen((state) {
-      if(state == AudioPlayerState.STOPPED) {
+      if (state == AudioPlayerState.STOPPED) {
         setState(() => statut = PlayerState.stopped);
       }
     });
@@ -187,21 +186,18 @@ class _MyHomePageState extends State<MyHomePage> {
     currentMusic = listMusic[musicIndex];
     audioPlayer?.stop();
     play();
-
   }
 
   Future<void> rewind() async {
-    (musicIndex ==  0) ? musicIndex = listMusic.length - 1 : musicIndex--;
+    (musicIndex == 0) ? musicIndex = listMusic.length - 1 : musicIndex--;
     currentMusic = listMusic[musicIndex];
     audioPlayer?.stop();
     play();
-
   }
 
   String fromDuration(Duration duration) {
     return duration.toString().split('.').first;
   }
-
 }
 
 enum ActionMusic { play, pause, rewind, forward }
