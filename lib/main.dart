@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:audioplayer/audioplayer.dart';
+import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'music.dart';
 
@@ -30,20 +33,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   List<Music> listMusic = [
-    new Music('Theme Swift', 'Samu', 'assets/un.jpg', 'assets/un.mp3'),
-    new Music('Theme Flutter', 'Samu', 'assets/deux.jpg', 'assets/deux.mp3')
+    new Music('Theme Swift', 'Samu', 'assets/un.jpg', 'un.mp3'),
+    new Music('Theme Flutter', 'Samu', 'assets/deux.jpg', 'deux.mp3')
   ];
 
+  static AudioPlayer audioPlayer = new AudioPlayer();
+  static AudioCache audioCache = new AudioCache(fixedPlayer: audioPlayer);
   Music currentMusic;
-  double position = 0.0;
+  Duration position = new Duration(seconds: 0);
+  Duration durationMusic = new Duration(seconds: 0);
+  PlayerState statut = PlayerState.stopped;
+
+  int musicIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    currentMusic = listMusic[0];
+    currentMusic = listMusic[musicIndex];
+    configAudioPlayer();
   }
-
-  AudioPlayer audioPlayer;
 
   @override
   Widget build(BuildContext context) {
@@ -70,27 +78,36 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                playerButtons(Icons.fast_rewind, 30.0,ActionMusic.rewind),
-                playerButtons(Icons.play_arrow, 45.0,ActionMusic.play),
-                playerButtons(Icons.fast_forward, 30.0,ActionMusic.forward),
+                playerButtons(Icons.fast_rewind, 30.0, ActionMusic.rewind),
+                playerButtons(
+                    (statut == PlayerState.playing)
+                        ? Icons.pause
+                        : Icons.play_arrow,
+                    45.0,
+                    (statut == PlayerState.playing)
+                        ? ActionMusic.pause
+                        : ActionMusic.play),
+                playerButtons(Icons.fast_forward, 30.0, ActionMusic.forward),
               ],
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                playerText('0:0', 0.8),
-                playerText('0:22', 0.8),
+                playerText(fromDuration(position), 0.8),
+                playerText(fromDuration(durationMusic), 0.8),
               ],
             ),
             Slider(
-              value: position,
+              value: position.inSeconds.toDouble(),
               min: 0.0,
-              max: 30.0,
+              max: durationMusic.inSeconds.toDouble(),
               inactiveColor: Colors.white,
               activeColor: Colors.red,
-              onChanged:(double d) {
+              onChanged: (double d) {
                 setState(() {
-                  position = d;
+                  Duration newDuration = new Duration(seconds: d.toInt());
+                  position = newDuration;
+                  audioPlayer.seek(position);
                 });
               },
             )
@@ -108,21 +125,22 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () {
         switch (action) {
           case ActionMusic.play:
-            print('Play');
+            play();
             break;
           case ActionMusic.pause:
-            print('Pause');
+            pause();
             break;
           case ActionMusic.rewind:
             print('Rewind');
+            rewind();
             break;
           case ActionMusic.forward:
             print('Forward');
+            forward();
             break;
         }
       },
     );
-
   }
 
   Text playerText(String data, double scale) {
@@ -137,12 +155,55 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  
+  void configAudioPlayer() {
+    audioPlayer.onAudioPositionChanged.listen(
+      (pos) => setState(() => position = pos)
+    );
+
+    audioPlayer.onDurationChanged.listen((Duration d) {
+      print('Max duration: $d');
+      setState(() => durationMusic = d);
+    });
+
+    audioPlayer.onPlayerStateChanged.listen((state) {
+      if(state == AudioPlayerState.STOPPED) {
+        setState(() => statut = PlayerState.stopped);
+      }
+    });
+  }
+
+  Future<void> play() async {
+    await audioCache.play(currentMusic.urlSong);
+    setState(() => statut = PlayerState.playing);
+  }
+
+  Future<void> pause() async {
+    audioPlayer?.pause();
+    setState(() => statut = PlayerState.paused);
+  }
+
+  Future<void> forward() async {
+    (musicIndex == listMusic.length - 1) ? musicIndex = 0 : musicIndex++;
+    currentMusic = listMusic[musicIndex];
+    audioPlayer?.stop();
+    play();
+
+  }
+
+  Future<void> rewind() async {
+    (musicIndex ==  0) ? musicIndex = listMusic.length - 1 : musicIndex--;
+    currentMusic = listMusic[musicIndex];
+    audioPlayer?.stop();
+    play();
+
+  }
+
+  String fromDuration(Duration duration) {
+    return duration.toString().split('.').first;
+  }
+
 }
 
-enum ActionMusic {
-  play,
-  pause,
-  rewind,
-  forward
-}
+enum ActionMusic { play, pause, rewind, forward }
+
+enum PlayerState { playing, stopped, paused }
